@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# 安装脚本在目标项目生成的备份目录（不应出现在本仓库）
+.workbuddy-cli-backup-*/
+
+# 编辑器/系统
+.DS_Store
+.vscode/
+.idea/

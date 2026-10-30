@@ -1,0 +1,12 @@
+本仓库是 dsh-pet 的「可移植补丁包」，不是 fork。
+
+- 上游项目：dsh-pet-indesktop — https://github.com/MerZlin/dsh-pet-indesktop
+  版权归原作者 Merzlin 所有，按 MIT 许可分发（见 LICENSE）。
+- `files/` 下的既有文件均为上游 v4.4.0 的衍生副本，版权归原作者；
+  本包对它们的修改同样以 MIT 发布。
+- `files/pet/chat/cli/`（CliBridge / CliProvider）为本包新增实现，以 MIT 发布。
+- `tests/` 下的新增用例同上。
+
+关于第三方产品：本项目只调用使用者本机已安装、已由本人登录的
+CodeBuddy Code CLI（WorkBuddy 客户端自带），不包含、不重新分发该 CLI 或其凭据，
+也不绕过任何账号、额度或企业策略。请仅使用你本人或你所在组织已授权的账号与额度。
