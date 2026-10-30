@@ -179,12 +179,39 @@ def build_provider(config):
 
 - `tests/fake_cli.py` —— 假 CLI 桩（`sys.executable` 启动，按环境变量切换：正常 / 报错 / 崩溃 / 挂起），
   注意桩里 `sys.stdout.reconfigure(encoding="utf-8")`，否则 Windows 默认 GBK 会污染 JSONL；
-- `tests/test_chat_cli_provider.py` —— 15 例：事件映射、argv 工具禁用、路径发现、子进程收发、取消终止后重建、崩溃报错、`CliProvider` 的文本/思考/status/空回复/取消/转录；
+- `tests/test_chat_cli_provider.py` —— **20 例**：事件映射、argv 工具禁用、路径发现、子进程收发、取消终止后重建、崩溃报错、`CliProvider` 的文本/思考/status/空回复/取消/转录；
 - `tests/test_chat_cli_config.py` —— 11 例：`kind` 序列化与默认值、`http_fallback` 选择、`build_provider` 分派、`ChatService.send` 按 kind 解析、`resolve_chat_context` 回退；
 - `tests/test_api_provider_list.py` 新增 1 例：现代设置窗里三行被「模型与连接」认领且挂进「AI 与对话」域页。
 
-**可选**：`docs/SETTINGS-CHANGE-GATES.md` 的「变更记录」里补一条新键登记（本包未包含该文档的改动，
-因为它是项目自己的门禁文件，合并时按你的仓库口径写）。
+**行数预算（必须做）**：`modern_settings_dialog.py` 多了 3 个 claim 行键 + 2 行注释，
+`tests/test_architecture.py::test_modern_settings_dialog_py_line_budget` 会从 2734 红到 2739。
+按该项目自己的约定**校准预算，不要压行**：
+
+```python
+# 2026-10-30 上调到 2739：AI 域「模型与连接」组新增本地 CLI 连接方式，claim 表多登记
+# 三个行键（connection_kind / cli_path / cli_model）。行本体在 _AiSettingsPage，
+# 本文件只多 3 个键 + 2 行注释（净 +5）。实测 2739。
+MODERN_SETTINGS_DIALOG_PY_LINE_BUDGET = 2739  # 2026-10-30：CLI 连接方式三行 claim
+```
+
+> 本包已把校准后的 `tests/test_architecture.py` 一并放进 `files/tests/`，`install.py` 会覆盖过去。
+
+**可选：设置门禁登记**。`docs/SETTINGS-CHANGE-GATES.md` 是项目自己的准入文件，本包不改它。
+如果你们有改动设置就必须登记的规定，把下面这一段贴进「变更记录」即可：
+
+```markdown
+### 2026-10-30 — AI 对话新增「本地 CLI」连接方式（provider 级 4 个新键）
+
+| setting_id | domain / group | default | disclosure | 说明 |
+|---|---|---|---|---|
+| `chat.providers.*.kind` | chat / provider | `"http"` | primary | 老配置缺键回落 http；非法值夹回 http/cli |
+| `chat.providers.*.cli_path` | chat / provider | `""` | advanced | 留空自动发现 WorkBuddy 自带 codebuddy；找不到给可读提示 |
+| `chat.providers.*.cli_model` | chat / provider | `""` | advanced | 留空回落 hy4-preview |
+| `chat.aux_provider` | chat / 全局 | `""` | advanced | 指定 HTTP 旁路回退 provider；失效时回落第一个可用 HTTP |
+
+行为：`ChatService.send()` 按 `kind` 分派；CLI 只当聊天模型（`--max-turns 1` + 禁写类工具，
+永不给 `-y`）；视觉/翻译/记忆提炼回退 `http_fallback`，无 HTTP 时视觉/翻译给提示、记忆提炼跳过。
+```
 
 ---
 

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import re
 import shutil
 import sys
@@ -24,7 +25,18 @@ from pathlib import Path
 
 PACK_ROOT = Path(__file__).resolve().parent
 FILES_ROOT = PACK_ROOT / "files"
-EXPECTED_VERSION = "4.4.0"
+
+
+def expected_version() -> str:
+    """基线版本从 pack.json 读（缺失时回落 4.4.0），与 README 徽章同源。"""
+    try:
+        meta = json.loads((PACK_ROOT / "pack.json").read_text(encoding="utf-8"))
+        return str(meta["upstream"]["base_version"])
+    except Exception:
+        return "4.4.0"
+
+
+EXPECTED_VERSION = expected_version()
 
 
 def sha256(path: Path) -> str:

@@ -1,0 +1,62 @@
+name: upstream-watch
+
+# 让这份补丁包和上游 dsh-pet 保持联系：
+# 每月比对一次上游最新 tag 与 pack.json 的 upstream.base_version，落后就开 issue。
+
+on:
+  schedule:
+    - cron: "0 3 1 * *"   # 每月 1 日 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read base version from pack.json
+        id: base
+        run: |
+          version=$(python -c "import json;print(json.load(open('pack.json'))['upstream']['base_version'])")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "本包基线: $version"
+
+      - name: Fetch upstream latest tag
+        id: upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh api repos/MerZlin/dsh-pet-indesktop/releases/latest --jq .tag_name 2>/dev/null || echo "")
+          if [ -z "$tag" ]; then
+            tag=$(gh api repos/MerZlin/dsh-pet-indesktop/tags --jq '.[0].name' 2>/dev/null || echo "")
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "上游最新: ${tag:-（取不到）}"
+
+      - name: Open issue when the pack is behind
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE: ${{ steps.base.outputs.version }}
+          LATEST: ${{ steps.upstream.outputs.tag }}
+        run: |
+          latest="${LATEST#v}"
+          if [ -z "$latest" ]; then
+            echo "拿不到上游 tag，跳过"
+            exit 0
+          fi
+          if [ "$latest" = "$BASE" ]; then
+            echo "已是最新（$BASE）"
+            exit 0
+          fi
+          title="upstream v$latest 已发布，本补丁包基线仍是 v$BASE"
+          existing=$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number' 2>/dev/null || echo "")
+          if [ -n "$existing" ]; then
+            echo "已有同类 issue #$existing，跳过"
+            exit 0
+          fi
+          body="上游 MerZlin/dsh-pet-indesktop 已发布 v$latest，本包基线是 v$BASE。跟进：1) git remote add upstream https://github.com/MerZlin/dsh-pet-indesktop.git && git fetch upstream --tags；2) 按 PORTING.md 重新核对 files/（整文件补丁包，上游一改就要重生成）；3) 更新 pack.json 的 upstream.base_version 与 README 的 base 徽章；4) 跑 install.py --target <临时副本> --dry-run 与聚焦测试；5) 全绿后提交并在本 issue 记结论。"
+          gh issue create --title "$title" --body "$body"

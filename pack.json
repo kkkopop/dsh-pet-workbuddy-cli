@@ -1,0 +1,26 @@
+{
+  "name": "dsh-pet-workbuddy-cli",
+  "kind": "patch-pack",
+  "upstream": {
+    "repo": "MerZlin/dsh-pet-indesktop",
+    "url": "https://github.com/MerZlin/dsh-pet-indesktop",
+    "base_version": "4.4.0",
+    "license": "MIT",
+    "git_remote_hint": "git remote add upstream https://github.com/MerZlin/dsh-pet-indesktop.git"
+  },
+  "feature": "Use a locally installed, already-logged-in WorkBuddy/CodeBuddy CLI as dsh-pet's chat model (no API key, consumes account credits)",
+  "entrypoints": {
+    "chat_provider": "pet/chat/cli/provider.py",
+    "cli_bridge": "pet/chat/cli/bridge.py",
+    "dispatch": "pet/chat/providers.py::build_provider",
+    "settings_ui": "pet/chat/ai_settings_page.py",
+    "settings_assembly_claim": "pet/modern_settings_dialog.py"
+  },
+  "files": 18,
+  "verified": {
+    "focused_tests": "40 passed",
+    "adjacent_tests": "216 passed, 1 skipped",
+    "ruff": "All checks passed",
+    "architecture_line_budget": "modern_settings_dialog.py 2739 (calibrated from 2734)"
+  }
+}

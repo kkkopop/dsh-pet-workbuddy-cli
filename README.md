@@ -1,10 +1,37 @@
 # dsh-pet × WorkBuddy CLI —— 让桌宠用账号额度聊天的可移植补丁包
 
+[![upstream](https://img.shields.io/badge/upstream-MerZlin%2Fdsh--pet--indesktop-blue?logo=github)](https://github.com/MerZlin/dsh-pet-indesktop)
+[![base version](https://img.shields.io/badge/base-v4.4.0-green)](pack.json)
+[![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
+[![pack](https://img.shields.io/badge/type-patch%20pack-orange)](pack.json)
+
 > 给 [dsh-pet](https://github.com/MerZlin/dsh-pet-indesktop)（PySide6 桌面宠物）加一种新的**模型服务连接方式**：
 > 不再依赖用户自备的 API Key，而是调用本机已登录的 **WorkBuddy / CodeBuddy 官方 CLI**，
 > 直接消耗该账号的订阅额度（积分）。
 >
 > 本仓库是**可移植补丁包**，不是项目 fork：把它覆盖到你的 dsh-pet 源码树即可使用。
+
+---
+
+## 与 dsh-pet 的关系（怎么跟上游保持联系）
+
+- **上游**：[MerZlin/dsh-pet-indesktop](https://github.com/MerZlin/dsh-pet-indesktop)（MIT）。
+  本仓库是它的**增量补丁包**（patch pack），不是 fork：既不重新发布上游产物，也不改动上游仓库。
+- **基线版本**：`v4.4.0`。这个值写在 [`pack.json`](pack.json) 里，`install.py` 按它做版本守卫，
+  别人一看就知道"这份补丁是给哪个 dsh-pet 做的"。
+- **机器可读的归属声明**：`pack.json` 记录 `upstream.repo / base_version / license`、入口文件和本次验证结果，
+  方便脚本或人快速判断兼容性。
+- **本地挂上游 remote**（想自己 diff/跟版时用）：
+
+  ```bash
+  git remote add upstream https://github.com/MerZlin/dsh-pet-indesktop.git
+  git fetch upstream --tags
+  git diff upstream/v4.4.0 -- files/    # 看这一版补丁相对上游都动了什么
+  ```
+
+- **上游发新版时自动提醒**：仓库内置 `.github/workflows/upstream-watch.yml`，每月（也可手动
+  `Run workflow`）对比上游最新 tag 与 `pack.json` 的 `base_version`，落后就在本仓库自动开 issue，
+  避免这份补丁悄悄过期。
 
 ---
 
@@ -115,6 +142,7 @@ files/pet/config.py                                 ← 默认 provider 增加 k
 files/pet/screen_capture/vision_bridge.py           ← 视觉/翻译回退
 files/pet/window.py                                 ← 主动识屏回退
 files/tests/{fake_cli,test_chat_cli_provider,test_chat_cli_config,test_api_provider_list}.py
+files/tests/test_architecture.py                    ← 行数预算按新实测值校准（2734 → 2739）
 ```
 
 > ⚠️ **最容易漏的一处**：现代设置窗不是直接渲染 `ai_settings_page` 里的 `SettingsSection`，
@@ -177,14 +205,20 @@ files/tests/{fake_cli,test_chat_cli_provider,test_chat_cli_config,test_api_provi
 
 ```bash
 python -m pytest tests/test_chat_cli_provider.py tests/test_chat_cli_config.py tests/test_api_provider_list.py -q
-# 35 passed
+# 40 passed（provider 20 + config 11 + provider 列表与装配 9）
+
 python -m pytest tests/test_chat_service.py tests/test_settings_page_guide.py \
                  tests/test_settings_search_aliases.py tests/test_screen_capture_translate.py \
                  tests/test_vision.py tests/test_feature_modules_gating.py tests/test_architecture.py -q
-# 相邻域全绿
+# 216 passed, 1 skipped（相邻域 + 架构契约）
+
 python -m ruff check pet tests
 # All checks passed!
 ```
+
+> `tests/test_architecture.py` 里的 `modern_settings_dialog.py` 行数预算已按新实测值
+> 从 2734 校准到 **2739**（+5 = 3 个 claim 行键 + 2 行注释）。**不要为了达标压行**——
+> 这是该项目自己的约定（见 `tests/test_architecture.py` 顶部注释）。
 
 ---
 
